@@ -18,7 +18,7 @@ Development mode stores accounts in `.data/portal.sqlite` and synthetic uploads 
 
 ## Microsoft and production setup
 
-Copy `.env.example` to `.env`; never commit `.env`. Use a persistent disk and HTTPS reverse proxy. Set `DEV_MODE=0` and `PUBLIC_URL` to the exact HTTPS origin. Production startup refuses to proceed without Microsoft and email settings.
+Copy `.env.example` to `.env`; never commit `.env`. Use a persistent disk and HTTPS reverse proxy. Set `DEV_MODE=0` and `PUBLIC_URL` to the exact HTTPS origin. The public website can start without portal settings. The portal displays a setup message and its account/upload endpoints return 503 until all required settings are available.
 
 1. Register a single-tenant confidential application in Microsoft Entra. Set tenant ID, application/client ID and a secret through the deployment secret manager.
 2. A Microsoft administrator must consent to Graph application permissions required for guest invitations and document operations. The invitation endpoint documents `User.Invite.All`; the folder invite endpoint documents `Files.ReadWrite.All`. These are sensitive permissions: use a dedicated app and review the scope with the administrator. Do not give clients access to the parent library. The connector available in ChatGPT is separate from the server application credential.
@@ -34,4 +34,22 @@ Official references:
 
 Uploads are limited to 20 MB and supported extensions; PDF headers are checked. These checks are not malware scanning. Before real tax documents, add malware quarantine/scanning, account recovery, MFA, durable rate limiting at the reverse proxy, operational audit trails, encrypted backups/retention policy and managed secret rotation. The included SQLite/local upload development store is not a production document service. Place `.data` on an encrypted restricted disk; never serve it publicly.
 
-The original site's analytics, live chatbot, external booking and inquiry submissions are blocked by CSP so cloned UI cannot transmit client information to the reference site's services. Those integrations need replacement endpoints before going live; phone/email links still work. The website is retained locally in this project, not published to Sites: this backend requires a persistent Node runtime and SQLite disk.
+The original site's analytics, live chatbot, external booking and inquiry submissions are blocked by CSP so cloned UI cannot transmit client information to the reference site's services. Those integrations need replacement endpoints before going live; phone/email links still work. The project supports a persistent Node server locally and Vercel Functions with a hosted Turso account database.
+
+
+## Deploying to Vercel
+
+The repository includes `vercel.json` with static marketing assets in `public`, page refresh routes, security headers, and the `/api/index.mjs` function. Use the repository root as the project root; leave Framework Preset as **Other**. The checked-in build command prepares static files without importing the database or requiring secrets. The public website deploys without any environment variables.
+
+To activate the portal, add the following in Vercel Project Settings → Environment Variables, then redeploy:
+
+- `PUBLIC_URL`: the exact production HTTPS origin, e.g. `https://cpa-nu.vercel.app`.
+- `DEV_MODE=0` (development mode is forcibly disabled on Vercel).
+- `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`: a dedicated hosted database URL and database-scoped read/write token. Create these in Turso; enter the token directly in Vercel, never in source control. Tables are created automatically on first portal use. The adapter uses the documented HTTPS SQL pipeline with bound parameters. No local SQLite or `/tmp` database is used on Vercel.
+- All five Microsoft/SharePoint variables and the two email variables listed in `.env.example`.
+
+Without these settings, `/portal` shows a setup message; registration and document uploads are disabled. Existing development accounts are not transferred to the hosted database. Vercel uploads are limited to **4 MB per file** to stay below its function request-body limit; the persistent local server retains the 20 MB limit. Larger uploads need a separate direct-upload flow.
+
+The original server failed in serverless deployment because it required production secrets at module import and initialized a writable local database. The function entry point now exports a request handler without starting a listening server, and account database initialization is lazy. Static pages are served separately from the API.
+
+Verification: `TEST_URL=http://localhost:3001 npm test` against a development server at port 3001 also runs the Vercel startup regression and typed hosted-database adapter tests. A live Turso/Microsoft integration still requires real service configuration.
