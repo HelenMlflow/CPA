@@ -1,0 +1,1 @@
+import{aJ as s,aK as c}from"./index-D8NOp2n-.js";const p=c.create({timeout:45e3,headers:{Accept:"application/json","Content-Type":"application/json"}}),m=async({name:t,email:a,phone:o,message:n,is_consent:e})=>{const{data:i}=await p.post(s("/api/contact"),{name:t.trim(),email:a.trim(),phone:o.trim(),message:n.trim(),is_consent:!!e});return i};export{m as s};

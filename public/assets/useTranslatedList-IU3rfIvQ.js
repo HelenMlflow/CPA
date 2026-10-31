@@ -1,0 +1,1 @@
+import{u as a,r as i}from"./index-D8NOp2n-.js";function f(t,s,r=[]){const{t:u}=a(t);return i.useMemo(()=>{const n=u(s,{returnObjects:!0});return Array.isArray(n)?r.map((e,o)=>({...e,...n[o]??{}})):r},[u,t,s,r])}export{f as u};

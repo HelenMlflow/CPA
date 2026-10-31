@@ -1,0 +1,1 @@
+{"name":"peter-cpa-portal","private":true,"type":"module","scripts":{"dev":"DEV_MODE=1 node --env-file-if-exists=.env server.mjs","start":"node --env-file-if-exists=.env server.mjs","test":"node --test test/*.test.mjs"},"engines":{"node":">=24"}}
